@@ -64,9 +64,11 @@
         <option value="">— choose a 15-minute slot —</option>
         {% for slot in slots %}
           <option value="{{ slot.value }}"
-            {%- if chosen.get('start_time') == slot.value %} selected{% endif %}>{{ slot.label }}</option>
+            {%- if slot.free_rooms == 0 %} disabled{% endif %}
+            {%- if chosen.get('start_time') == slot.value %} selected{% endif %}>{{ slot.label }} — {{ slot.availability }}</option>
         {% endfor %}
       </select>
+      <p class="hint">Fully booked slots are disabled: both consulting rooms are taken for that quarter hour.</p>
     </div>
 
     <div class="field">

@@ -20,3 +20,6 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
 - 2026-09-21 — Deployment configuration: `.env` support with a checked-in
   `.env.example`, bootstrap and run scripts for Windows and Unix, a WSGI entry
   point, and a deployment guide (`docs/DEPLOYMENT.md`).
+- 2026-09-22 — Timetable rules around a booking (`MSD426GXUST3-47`): nothing
+  in the past, and the booking form shows which consulting rooms are still free
+  for each 15-minute slot, disabling slots where both rooms are taken.
