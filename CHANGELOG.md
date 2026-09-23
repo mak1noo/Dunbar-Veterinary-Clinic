@@ -51,3 +51,10 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external
   references and persistence of records across an application restart.
+- 2026-09-23 — Recording an animal against a client (`MSD426GXUST3-41`): a
+  client page now leads to a form that records an animal with the required
+  name and species plus optional breed, sex, date of birth, microchip, desexed
+  and notes. The rules live in `app/services/records.py`, the animal is attached to
+  the client whose page it was added from (there is no form that can save one
+  without a client), it appears at once in that client's animal list, and
+  automated tests cover the valid, the invalid and the ownerless paths.
