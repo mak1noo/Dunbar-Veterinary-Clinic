@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Find an animal — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Find an animal</h1>
+  <p>Search the register by the animal's own name. Every animal that matches is
+    listed with the client it belongs to and the number to ring, wherever in the
+    register it sits.</p>
+</section>
+
+<section class="panel">
+  <form class="inline-form" method="get" action="{{ url_for('animals.search_animals') }}">
+    <span class="field">
+      <label for="name">Animal name</label>
+      <input type="text" id="name" name="name" value="{{ term }}" placeholder="e.g. Jed">
+    </span>
+    <button type="submit">Search</button>
+  </form>
+
+  {% if not searched %}
+    <p class="hint">Type a name, or part of a name, to search every client at once.</p>
+  {% elif matches %}
+    <p class="hint">{{ matches|length }} match{{ "es" if matches|length != 1 else "" }} for "{{ term }}".</p>
+  {% else %}
+    <p class="hint">No animal on the register matches "{{ term }}". Check the spelling,
+      or try part of the name.</p>
+  {% endif %}
+</section>
+
+{% if matches %}
+<section class="panel">
+  <h2>Matches</h2>
+  <table class="records">
+    <thead>
+      <tr>
+        <th scope="col">Animal</th>
+        <th scope="col">Species</th>
+        <th scope="col">Owner</th>
+        <th scope="col">Contact number</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for animal in matches %}
+        <tr>
+          <td>{{ animal.name }}{% if not animal.active %} <span class="hint">(removed)</span>{% endif %}</td>
+          <td>{{ animal.species }}</td>
+          <td><a href="{{ url_for('clients.show_client', client_id=animal.client.id) }}">{{ animal.client.name }}</a></td>
+          <td>{{ animal.client.phone }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

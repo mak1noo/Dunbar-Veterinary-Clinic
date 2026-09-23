@@ -24,6 +24,7 @@ def create_app(config=None):
 
     db.init_app(app)
 
+    from app.routes.animals import animals_bp
     from app.routes.appointments import appointments_bp
     from app.routes.clients import clients_bp
     from app.routes.consultations import consultations_bp
@@ -31,6 +32,7 @@ def create_app(config=None):
     from app.routes.offline import offline_bp
     from app.routes.rescheduling import rescheduling_bp
 
+    app.register_blueprint(animals_bp)
     app.register_blueprint(appointments_bp)
     app.register_blueprint(clients_bp)
     app.register_blueprint(consultations_bp)

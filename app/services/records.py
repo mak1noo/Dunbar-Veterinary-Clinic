@@ -83,3 +83,32 @@ def client_columns(*, name, phone, email=None, postal_address=None, notes=None, 
         "notes": clean(notes) or None,
         "sms_consent": bool(sms_consent),
     }
+
+
+# --- Finding an animal by name (story MSD426GXUST3-42) ---------------------
+
+# The characters LIKE reads as wildcards rather than as themselves.
+LIKE_SPECIAL = "%_\\"
+
+
+def animal_name_pattern(term):
+    """The LIKE pattern for a search by animal name, or None when nothing was typed.
+
+    Story MSD426GXUST3-42. Reception searches by the animal's name rather
+    than the owner's because the person asking is so often not the client on
+    file, so the pattern is built to run across the whole register and to
+    match anywhere in a name: "Jed" finds Jed, and so does "ed".
+
+    The characters LIKE would normally treat as wildcards are escaped here, so
+    a search for "100%" looks for those four characters instead of quietly
+    matching every animal on the books. An empty search box returns None: an
+    empty search is not a search for everything.
+    """
+    wanted = clean(term)
+    if not wanted:
+        return None
+    escaped = "".join(
+        "\\" + character if character in LIKE_SPECIAL else character
+        for character in wanted
+    )
+    return f"%{escaped}%"

@@ -39,6 +39,19 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   postal address, notes and SMS consent, with the rules in
   `app/services/records.py`, the new client shown at once in the client list,
   and automated tests for the valid and invalid paths.
+- 2026-09-23 — Finding an animal by name across the register
+  (`MSD426GXUST3-42`): the front desk can search the whole register by an
+  animal's own name instead of opening clients one at a time, which is the
+  lookup it needs when the person asking is not the client on file. Every
+  match is listed with the animal, the client it belongs to and the number to
+  ring. The search never asks who the owner is and does not stop at the first
+  match; an empty search box asks for a name rather than listing the whole
+  register; the characters LIKE would read as wildcards are matched literally,
+  so a search for "100%" cannot quietly return everything; a name with no
+  matches returns an empty result rather than an error; and an animal taken
+  off the books is still found, marked as such. Automated tests cover the
+  matches, the owner and contact number on each match, the case-insensitive
+  and partial matches, the empty search, the wildcards and the no-match path.
 - 2026-09-23 — Viewing and correcting a client record (`MSD426GXUST3-40`): each
   client in the register now has a page of their own showing the details on
   file alongside their animals and farm properties, with a correction form
