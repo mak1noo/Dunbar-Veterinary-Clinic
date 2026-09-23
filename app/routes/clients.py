@@ -18,7 +18,7 @@ correction over the top of it.
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
 from app.models import Client, db
-from app.services.records import client_columns, validate_client
+from app.services.records import clean, client_columns, validate_client
 from app.services.scheduling import appointments_for_client
 
 clients_bp = Blueprint("clients", __name__, url_prefix="/clients")
@@ -66,13 +66,54 @@ def _record_or_404(client_id):
     return record
 
 
+def _search_pattern(term):
+    """The LIKE pattern for a search term, with the wildcards inside it escaped.
+
+    A farm called "50% Off" is a name, not a pattern, so the characters that
+    mean something to LIKE are escaped before the term is wrapped in the
+    wildcards that do the searching.
+    """
+    escaped = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped.lower()}%"
+
+
+def _matching_clients(term):
+    """The register rows whose name or phone number contains ``term``.
+
+    Stopped clients are matched too. They are still on the register, and the
+    list marks them, so a search that hid them would answer "no such client"
+    to the one person who knows there is one.
+    """
+    query = Client.query
+    if term:
+        pattern = _search_pattern(term)
+        query = query.filter(
+            db.or_(
+                db.func.lower(Client.name).like(pattern, escape="\\"),
+                db.func.lower(Client.phone).like(pattern, escape="\\"),
+            )
+        )
+    return query.order_by(db.func.lower(Client.name)).all()
+
+
 @clients_bp.get("/")
 def list_clients():
-    """The client list, in the order the paper register is kept: by name."""
-    clients = Client.query.order_by(db.func.lower(Client.name)).all()
+    """The client list, in the order the paper register is kept: by name.
+
+    ``?q=`` narrows the register to the records whose name or phone number
+    contains the term. The page says which search it is showing, so that an
+    empty result reads as "nothing matched" rather than "the register is
+    empty".
+    """
+    term = clean(request.args.get("q", ""))
     added_id = request.args.get("added", type=int)
     added = db.session.get(Client, added_id) if added_id else None
-    return render_template("clients/list.html", clients=clients, added=added)
+    return render_template(
+        "clients/list.html",
+        clients=_matching_clients(term),
+        added=added,
+        term=term,
+    )
 
 
 @clients_bp.get("/new")
@@ -105,6 +146,7 @@ def show_client(client_id):
         "clients/detail.html",
         record=record,
         updated=request.args.get("updated") == "1",
+        changed=request.args.get("changed") == "1",
     )
 
 
@@ -151,3 +193,18 @@ def update_client(client_id):
     db.session.commit()
 
     return redirect(url_for("clients.show_client", client_id=record.id, updated=1), code=303)
+
+
+@clients_bp.post("/<int:client_id>/active")
+def set_client_active(client_id):
+    """Stop work for a client, or put them back on the active list.
+
+    Stopping is a state rather than a delete: the row stays, every booking
+    already made against it stays, and a search still finds the record, clearly
+    marked. Only the flag moves.
+    """
+    record = _record_or_404(client_id)
+    record.active = request.form.get("active") == "1"
+    db.session.commit()
+
+    return redirect(url_for("clients.show_client", client_id=record.id, changed=1), code=303)

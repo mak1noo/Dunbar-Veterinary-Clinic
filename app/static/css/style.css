@@ -377,3 +377,43 @@ button:hover,
 }
 
 .actions .quiet:hover { text-decoration: underline; }
+
+/* Searching the register and stopping a client (story MSD426GXUST3-40,
+   follow-up). The tag is the marker the list and the record page share, so a
+   stopped client reads the same in both places. */
+
+.field input[type="search"] {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+  min-width: 260px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 1px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.tag-active { background: var(--green-soft); color: #244f3b; }
+.tag-stopped { background: #f6e6e6; color: #7a1f1f; }
+
+.button-quiet {
+  background: #fff;
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.button-quiet:hover { background: #eef4f0; }
+
+.alert-stopped {
+  background: #fdf4e4;
+  border: 1px solid #e6cfa3;
+  color: #6b4a12;
+}

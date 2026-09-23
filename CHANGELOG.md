@@ -51,3 +51,9 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external
   references and persistence of records across an application restart.
+- 2026-09-23 — Finding a client and stopping one (`MSD426GXUST3-40`, follow-up):
+  the client list takes a search term and matches it against the name or the
+  phone number on the record, a stopped client is still found by that search and
+  marked rather than hidden, and a client can be stopped or put back on the
+  active list from their own page without losing the record or the bookings
+  already made against it.
