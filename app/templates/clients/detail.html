@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}{{ record.name }} — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro intro-row">
+  <div>
+    <h1>{{ record.name }}</h1>
+    <p>Client #{{ record.id }} on the register. Every consultation and farm
+      visit for this household or business is booked against this record.</p>
+  </div>
+  <div class="actions">
+    <a class="button-link" href="{{ url_for('clients.client_appointments', client_id=record.id) }}">View appointment history</a>
+    <a class="button" href="{{ url_for('clients.edit_client', client_id=record.id) }}">Change these details</a>
+  </div>
+</section>
+
+{% if updated %}
+  <div class="alert alert-ok">
+    <p>The changes to {{ record.name }} have been saved to the register.</p>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Contact details</h2>
+  <dl class="summary">
+    <dt>Full name</dt><dd>{{ record.name }}</dd>
+    <dt>Phone</dt><dd>{{ record.phone }}</dd>
+    <dt>Email</dt><dd>{{ record.email or "—" }}</dd>
+    <dt>Postal address</dt><dd>{{ record.postal_address or "—" }}</dd>
+    <dt>SMS reminders</dt><dd>{{ "Yes" if record.sms_consent else "No" }}</dd>
+    <dt>Notes</dt><dd>{{ record.notes or "—" }}</dd>
+    {% if record.created_at %}
+      <dt>On file since</dt><dd>{{ record.created_at.strftime('%d %B %Y') }}</dd>
+    {% endif %}
+  </dl>
+</section>
+
+<section class="panel">
+  <h2>Animals</h2>
+  {% if record.animals %}
+    <table class="records">
+      <thead>
+        <tr>
+          <th scope="col">Name</th>
+          <th scope="col">Species</th>
+          <th scope="col">Breed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for animal in record.animals %}
+          <tr>
+            <td>{{ animal.name }}</td>
+            <td>{{ animal.species }}</td>
+            <td>{{ animal.breed or "—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="hint">No animals on file for this client yet.</p>
+  {% endif %}
+</section>
+
+<section class="panel">
+  <h2>Farm properties</h2>
+  {% if record.properties %}
+    <table class="records">
+      <thead>
+        <tr>
+          <th scope="col">Property</th>
+          <th scope="col">Locality</th>
+          <th scope="col">Access notes</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for farm in record.properties %}
+          <tr>
+            <td>{{ farm.name }}</td>
+            <td>{{ farm.locality }}</td>
+            <td>{{ farm.access_notes or "—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="hint">No farm properties on file for this client.</p>
+  {% endif %}
+</section>
+
+<p><a href="{{ url_for('clients.list_clients') }}">Back to the client list</a></p>
+{% endblock %}

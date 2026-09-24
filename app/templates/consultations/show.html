@@ -20,6 +20,14 @@
     <dt>Status</dt><dd>{{ appointment.status }}</dd>
   </dl>
   <p class="hint">Reference: appointment #{{ appointment.id }}.</p>
+  {% if appointment.status == 'booked' %}
+  <p>
+    <a class="button-link" href="{{ url_for('rescheduling.reschedule_appointment', appointment_id=appointment.id) }}">
+      Reschedule this appointment</a>
+    <a class="button" href="{{ url_for('appointments.cancel_appointment', appointment_id=appointment.id) }}">
+      Cancel this appointment</a>
+  </p>
+  {% endif %}
   <p>
     <a class="button" href="{{ url_for('consultations.new_consultation', date=appointment.date.isoformat()) }}">
       Book another consultation</a>

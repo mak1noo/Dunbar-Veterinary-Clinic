@@ -14,6 +14,8 @@ Rules taken from the case study and the photocopied appointment book page
 """
 from datetime import date, datetime, time, timedelta
 
+from app.models import CONSULTATION, FARM_VISIT, STATUS_BOOKED, STATUS_CANCELLED, Appointment
+
 SLOT_MINUTES = 15
 CONSULTING_ROOMS = (1, 2)
 
@@ -128,3 +130,97 @@ def free_rooms_by_slot(day, existing_bookings, rooms=CONSULTING_ROOMS):
         slot: [room for room in rooms if room not in taken.get(slot, set())]
         for slot in slots_for_day(day)
     }
+
+
+def cancel_appointment(appointment):
+    """Mark a live booking cancelled without deleting its record.
+
+    Returns ``True`` when the status changed and ``False`` when the appointment
+    was already cancelled or has already happened (completed/no-show). The
+    caller owns the transaction.
+    """
+    if appointment.status != STATUS_BOOKED:
+        return False
+    appointment.status = STATUS_CANCELLED
+    return True
+def reschedule_appointment(
+    appointment,
+    *,
+    day,
+    start,
+    room=None,
+    estimated_hours=None,
+):
+    """Validate and apply a move to an existing appointment.
+
+    The function returns a list of validation problems. When the list is
+    empty, the appointment object has been updated in the session but the
+    caller remains responsible for committing the transaction. Only live
+    bookings may be moved; cancelled and finished records are history.
+    """
+    if appointment.status != STATUS_BOOKED:
+        return ["Only a live booking can be rescheduled."]
+    if appointment.kind == CONSULTATION:
+        selected_room = room if room is not None else appointment.room
+        existing_bookings = Appointment.query.filter(
+            Appointment.kind == CONSULTATION,
+            Appointment.status == STATUS_BOOKED,
+            Appointment.date == day,
+            Appointment.id != appointment.id,
+        ).all()
+        problems = validate_consultation(
+            day=day,
+            start=start,
+            animal=appointment.animal,
+            room=selected_room,
+            existing_bookings=existing_bookings,
+        )
+        if not problems:
+            appointment.date = day
+            appointment.start_time = start
+            appointment.room = selected_room
+        return problems
+
+    if appointment.kind == FARM_VISIT:
+        selected_hours = (
+            estimated_hours if estimated_hours is not None else appointment.estimated_hours
+        )
+        problems = validate_farm_visit(
+            day=day,
+            start=start,
+            farm_property=appointment.farm_property,
+            estimated_hours=selected_hours,
+        )
+        if not problems:
+            appointment.date = day
+            appointment.start_time = start
+            appointment.estimated_hours = selected_hours
+        return problems
+
+    return ["Unsupported appointment kind."]
+
+
+def farm_run_for_day(day):
+    """Return the day's active farm visits in the order they are worked."""
+    return (
+        Appointment.query.filter(
+            Appointment.kind == FARM_VISIT,
+            Appointment.date == day,
+            Appointment.status != STATUS_CANCELLED,
+        )
+        .order_by(Appointment.start_time.asc(), Appointment.id.asc())
+        .all()
+    )
+
+
+def appointments_for_client(client_id):
+    """Return every appointment for a client in chronological order."""
+    return (
+        Appointment.query.filter(Appointment.client_id == client_id)
+        .order_by(
+            Appointment.date.asc(),
+            Appointment.start_time.asc(),
+            Appointment.id.asc(),
+        )
+        .all()
+    )

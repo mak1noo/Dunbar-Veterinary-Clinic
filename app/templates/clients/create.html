@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Add a client — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Add a client</h1>
+  <p>Every booking belongs to a client, so the household or farming business
+    goes on file before any work is booked in. Reception has to take a name and
+    a phone number; the other details can follow later.</p>
+</section>
+
+{% if problems %}
+  <div class="alert alert-error">
+    <p>This client record cannot be saved yet:</p>
+    <ul>
+      {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Client details</h2>
+  <form method="post" action="{{ url_for('clients.new_client') }}">
+    <div class="field">
+      <label for="name">Full name <span class="required">required</span></label>
+      <input type="text" id="name" name="name" maxlength="120" required
+             data-error="Please enter the client's full name."
+             value="{{ chosen.get('name', '') }}" placeholder="e.g. Mrs Prosser">
+    </div>
+
+    <div class="field">
+      <label for="phone">Phone number <span class="required">required</span></label>
+      <input type="tel" id="phone" name="phone" maxlength="40" required
+             data-error="Please enter a phone number."
+             value="{{ chosen.get('phone', '') }}" placeholder="e.g. 0417 552 118">
+    </div>
+
+    <div class="field">
+      <label for="email">Email (optional)</label>
+      <input type="email" id="email" name="email" maxlength="255"
+             value="{{ chosen.get('email', '') }}" placeholder="e.g. prosser@example.com">
+    </div>
+
+    <div class="field">
+      <label for="postal_address">Postal address (optional)</label>
+      <input type="text" id="postal_address" name="postal_address" maxlength="255"
+             value="{{ chosen.get('postal_address', '') }}"
+             placeholder="e.g. PO Box 88, Boonah 4310">
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" rows="3"
+                placeholder="Anything the vet should know before the first visit">{{ chosen.get('notes', '') }}</textarea>
+    </div>
+
+    <div class="field field-check">
+      <label for="sms_consent">
+        <input type="checkbox" id="sms_consent" name="sms_consent"
+               {%- if chosen.get('sms_consent') %} checked{% endif %}>
+        Happy to get appointment reminders by text message
+      </label>
+    </div>
+
+    <button class="primary" type="submit">Save this client</button>
+  </form>
+</section>
+
+<script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Farm run · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Farm diary</p>
+    <h1>Farm run for {{ selected_date.strftime('%A, %d %B %Y') }}</h1>
+    <p class="lede">
+      Visits are shown in the order they are to be worked, earliest start time first.
+    </p>
+  </div>
+
+  <form class="date-filter" method="get" action="{{ url_for('main.farm_run') }}">
+    <label for="farm-run-date">Choose a day</label>
+    <div class="date-filter-controls">
+      <input id="farm-run-date" type="date" name="date" value="{{ selected_date.isoformat() }}" required>
+      <button type="submit">Show farm run</button>
+    </div>
+  </form>
+</section>
+
+{% if date_error %}
+<div class="alert alert-error" role="alert">{{ date_error }}</div>
+{% endif %}
+
+<p class="hint">
+  Cancelled visits are excluded. Completed and no-show visits remain in the historical run record.
+</p>
+
+{% if visits %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th scope="col">Time</th>
+        <th scope="col">Property</th>
+        <th scope="col">Client contact</th>
+        <th scope="col">Job</th>
+        <th scope="col">Head count</th>
+        <th scope="col">Estimated time</th>
+        <th scope="col">Access notes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for visit in visits %}
+      <tr>
+        <td class="time-cell">{{ visit.start_time.strftime('%H:%M') }}</td>
+        <td>
+          <strong>{{ visit.farm_property.name }}</strong>
+          <span class="secondary-line">{{ visit.farm_property.locality }}</span>
+        </td>
+        <td>
+          {{ visit.client.name }}
+          <a class="secondary-line" href="tel:{{ visit.client.phone }}">{{ visit.client.phone }}</a>
+        </td>
+        <td>{{ visit.reason or 'Not recorded' }}</td>
+        <td>
+          {% if visit.head_count is not none %}
+            {{ visit.head_count }}
+          {% else %}
+            Not recorded
+          {% endif %}
+        </td>
+        <td>{{ visit.estimated_hours }} hours</td>
+        <td class="notes-cell">{{ visit.farm_property.access_notes or 'No access notes recorded.' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="empty-state" aria-live="polite">
+  <h2>No farm visits scheduled</h2>
+  <p>There are no active farm visits for this day.</p>
+</section>
+{% endif %}
+{% endblock %}

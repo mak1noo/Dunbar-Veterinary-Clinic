@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block title %}{{ client_record.name }} appointments · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Client record</p>
+    <h1>{{ client_record.name }}</h1>
+    <p class="lede">
+      Every appointment booked for this client, across all dates and including cancelled records.
+    </p>
+  </div>
+  <a class="button-link" href="{{ url_for('main.index') }}">Back to home</a>
+</section>
+
+{% if appointments %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Time</th>
+        <th scope="col">Kind</th>
+        <th scope="col">Status</th>
+        <th scope="col">Booking detail</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for appointment in appointments %}
+      <tr>
+        <td>{{ appointment.date.strftime('%d %b %Y') }}</td>
+        <td class="time-cell">{{ appointment.start_time.strftime('%H:%M') }}</td>
+        <td><span class="kind-chip">{{ appointment.kind_label }}</span></td>
+        <td><span class="status-chip status-{{ appointment.status }}">{{ appointment.status_label }}</span></td>
+        <td>
+          {% if appointment.kind == 'consultation' %}
+            <strong>{{ appointment.animal.name }}</strong>
+            <span class="secondary-line">Consulting room {{ appointment.room }}</span>
+          {% elif appointment.kind == 'farm_visit' %}
+            <strong>{{ appointment.farm_property.name }}</strong>
+            <span class="secondary-line">
+              {{ appointment.farm_property.locality }} · {{ appointment.estimated_hours }} hours
+            </span>
+          {% endif %}
+          {% if appointment.reason %}
+            <span class="secondary-line">{{ appointment.reason }}</span>
+          {% endif %}
+          {% if appointment.status == 'booked' %}
+            <span class="secondary-line">
+              <a href="{{ url_for('rescheduling.reschedule_appointment', appointment_id=appointment.id) }}">Reschedule this appointment</a> ·
+              <a href="{{ url_for('appointments.cancel_appointment', appointment_id=appointment.id) }}">Cancel this appointment</a>
+            </span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="empty-state" aria-live="polite">
+  <h2>No appointments booked</h2>
+  <p>This client does not have any consultation or farm-visit records yet.</p>
+</section>
+{% endif %}
+{% endblock %}

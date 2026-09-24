@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Change {{ record.name }} — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Change these details</h1>
+  <p>Correcting the record for <strong>{{ record.name }}</strong> (client
+    #{{ record.id }}). The client keeps the same record and the same booking
+    history; only the details below are overwritten.</p>
+</section>
+
+{% if problems %}
+  <div class="alert alert-error">
+    <p>These changes cannot be saved yet:</p>
+    <ul>
+      {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Client details</h2>
+  <form method="post" action="{{ url_for('clients.update_client', client_id=record.id) }}">
+    <div class="field">
+      <label for="name">Full name <span class="required">required</span></label>
+      <input type="text" id="name" name="name" maxlength="120" required
+             data-error="Please enter the client's full name."
+             value="{{ chosen.get('name', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="phone">Phone number <span class="required">required</span></label>
+      <input type="tel" id="phone" name="phone" maxlength="40" required
+             data-error="Please enter a phone number."
+             value="{{ chosen.get('phone', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="email">Email (optional)</label>
+      <input type="email" id="email" name="email" maxlength="255"
+             value="{{ chosen.get('email', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="postal_address">Postal address (optional)</label>
+      <input type="text" id="postal_address" name="postal_address" maxlength="255"
+             value="{{ chosen.get('postal_address', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" rows="3">{{ chosen.get('notes', '') }}</textarea>
+    </div>
+
+    <div class="field field-check">
+      <label for="sms_consent">
+        <input type="checkbox" id="sms_consent" name="sms_consent"
+               {%- if chosen.get('sms_consent') %} checked{% endif %}>
+        Happy to get appointment reminders by text message
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="primary" type="submit">Save the changes</button>
+      <a class="quiet" href="{{ url_for('clients.show_client', client_id=record.id) }}">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+{% endblock %}

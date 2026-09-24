@@ -36,6 +36,17 @@ def _utcnow():
     return datetime.now(timezone.utc)
 
 
+def ensure_schema_compatibility():
+    """Apply the small schema upgrades that ``create_all`` cannot perform."""
+    inspector = sa.inspect(db.engine)
+    if "appointments" not in inspector.get_table_names():
+        return
+    columns = {column["name"] for column in inspector.get_columns("appointments")}
+    if "head_count" not in columns:
+        with db.engine.begin() as connection:
+            connection.execute(sa.text("ALTER TABLE appointments ADD COLUMN head_count INTEGER"))
+
+
 class Client(db.Model):
     """A household or a farming business."""
 
@@ -127,6 +138,7 @@ class Appointment(db.Model):
     # Farm visit shape.
     property_id = db.Column(db.Integer, db.ForeignKey("properties.id"))
     estimated_hours = db.Column(db.Numeric(4, 2))
+    head_count = db.Column(db.Integer)
 
     client = db.relationship("Client", back_populates="appointments")
     animal = db.relationship("Animal", back_populates="appointments")
@@ -157,3 +169,17 @@ class Appointment(db.Model):
 
     def __repr__(self):  # pragma: no cover - debug helper
         return f"<Appointment {self.id} {self.kind} {self.date} {self.start_time} ({self.status})>"
+
+    @property
+    def kind_label(self):
+        """Return the user-facing label for this appointment kind."""
+        if self.kind == CONSULTATION:
+            return "Consultation"
+        if self.kind == FARM_VISIT:
+            return "Farm visit"
+        return self.kind.replace("_", " ").title()
+
+    @property
+    def status_label(self):
+        """Return the user-facing label for this appointment status."""
+        return self.status.replace("_", " ").title()

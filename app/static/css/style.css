@@ -38,6 +38,7 @@ body {
 .brand-sub { margin-left: 10px; opacity: 0.85; font-size: 14px; }
 
 .nav a { color: #fff; text-decoration: none; opacity: 0.9; }
+.nav { display: flex; gap: 14px; }
 .nav a:hover { text-decoration: underline; }
 
 .page { max-width: 960px; margin: 0 auto; padding: 28px 20px 48px; }
@@ -70,6 +71,128 @@ h2 { margin: 26px 0 12px; font-size: 20px; }
   background: var(--green-soft);
   color: var(--green);
   font-size: 13px;
+}
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+.page-head h1 { margin: 0 0 6px; font-size: 28px; }
+.eyebrow {
+  margin: 0 0 6px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.lede { max-width: 68ch; margin: 0; color: var(--muted); }
+
+.date-filter {
+  min-width: min(100%, 300px);
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+}
+.date-filter label { display: block; margin-bottom: 6px; font-weight: 600; }
+.date-filter-controls { display: flex; gap: 8px; }
+.date-filter input {
+  min-width: 0;
+  flex: 1;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+}
+.date-filter button {
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--green);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid var(--green);
+  border-radius: 6px;
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+.button-link:hover { background: var(--green-soft); }
+
+.table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+}
+.data-table { width: 100%; border-collapse: collapse; min-width: 900px; }
+.data-table th,
+.data-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.data-table th { background: var(--green-soft); color: var(--green); font-size: 13px; letter-spacing: 0.03em; text-transform: uppercase; }
+.data-table tr:last-child td { border-bottom: 0; }
+.time-cell { font-weight: 700; white-space: nowrap; }
+.secondary-line { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; }
+.notes-cell { min-width: 220px; }
+
+.kind-chip,
+.status-chip {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.kind-chip { background: var(--green-soft); color: var(--green); }
+.status-chip { background: #edf1ee; color: var(--ink); }
+.status-cancelled { background: #f7e3e1; color: #8b2e2a; }
+.status-completed { background: #e4efe7; color: #246143; }
+.status-no_show { background: #f6ecd8; color: #805c12; }
+.empty-state { padding: 28px; border: 1px dashed var(--line); border-radius: 8px; background: var(--card); }
+.empty-state h2 { margin-top: 0; }
+
+/* Rescheduling (story MSD426GXUST3-53). */
+.booking-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin: 0 0 24px;
+}
+.booking-summary div { padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.booking-summary dt { color: var(--muted); font-size: 13px; font-weight: 700; text-transform: uppercase; }
+.booking-summary dd { margin: 4px 0 0; }
+.reschedule-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+  align-items: end;
+}
+.reschedule-form .field { margin-bottom: 0; max-width: none; }
+.reschedule-form .field input,
+.reschedule-form .field select {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+}
+.reschedule-form button { min-height: 42px; }
+
+@media (max-width: 720px) {
+  .page-head { align-items: stretch; flex-direction: column; }
+  .date-filter { min-width: 0; width: 100%; }
 }
 
 .footer {
@@ -166,3 +289,91 @@ button:hover,
 
 .summary dt { font-weight: 600; }
 .summary dd { margin: 0; }
+
+
+/* Client register (story MSD426GXUST3-39).
+   The panel, field, button and alert blocks above are shared with the booking form. */
+
+.intro-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.field input[type="tel"],
+.field input[type="email"],
+.field textarea {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font: inherit;
+  background: #fff;
+  color: var(--ink);
+}
+
+.field textarea { resize: vertical; }
+.field-check label { display: flex; align-items: center; gap: 8px; font-weight: 400; }
+
+.required {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.alert-ok {
+  background: var(--green-soft);
+  border: 1px solid #a9c9b5;
+  color: #244f3b;
+}
+
+.records {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 18px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+
+.records th,
+.records td {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 15px;
+  vertical-align: top;
+}
+
+.records th { background: var(--green-soft); font-size: 14px; }
+.records tr:last-child td { border-bottom: 0; }
+.records .just-added td { background: #f2f8f3; }
+
+/* Looking at a client record and correcting it (story MSD426GXUST3-40).
+   Everything else on these two pages reuses the blocks above. */
+
+.records a {
+  color: var(--green);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.records a:hover { text-decoration: underline; }
+
+.summary dd { overflow-wrap: anywhere; }
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.actions .quiet {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.actions .quiet:hover { text-decoration: underline; }

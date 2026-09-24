@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Reschedule appointment · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Appointment change</p>
+    <h1>Reschedule appointment #{{ appointment.id }}</h1>
+    <p class="lede">
+      The new date and time must pass the same rules as a new booking. Other appointments are not changed.
+    </p>
+  </div>
+  <a class="button-link" href="{{ url_for('main.index') }}">Back to home</a>
+</section>
+
+{% if updated %}
+<div class="alert alert-ok" role="status">
+  Appointment updated successfully.
+</div>
+{% endif %}
+
+{% if errors %}
+<div class="alert alert-error" role="alert">
+  <strong>The appointment was not moved.</strong>
+  <ul>
+    {% for error in errors %}
+    <li>{{ error }}</li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+<section class="panel">
+  <dl class="booking-summary">
+    <div>
+      <dt>Client</dt>
+      <dd>{{ appointment.client.name }}</dd>
+    </div>
+    <div>
+      <dt>Kind</dt>
+      <dd>
+        {% if appointment.kind == 'consultation' %}Consultation{% else %}Farm visit{% endif %}
+      </dd>
+    </div>
+    <div>
+      <dt>Current date</dt>
+      <dd>{{ appointment.date.strftime('%d %b %Y') }}</dd>
+    </div>
+    <div>
+      <dt>Current time</dt>
+      <dd>{{ appointment.start_time.strftime('%H:%M') }}</dd>
+    </div>
+    <div>
+      <dt>Booking detail</dt>
+      <dd>
+        {% if appointment.kind == 'consultation' %}
+          {{ appointment.animal.name }} · room {{ appointment.room }}
+        {% else %}
+          {{ appointment.farm_property.name }} · {{ appointment.estimated_hours }} hours
+        {% endif %}
+      </dd>
+    </div>
+  </dl>
+
+  {% if appointment.status == 'booked' %}
+  <form method="post" class="reschedule-form">
+    <div class="field">
+      <label for="date">New date</label>
+      <input id="date" name="date" type="date" value="{{ form_values.date }}" required>
+    </div>
+
+    <div class="field">
+      <label for="time">New start time</label>
+      <input id="time" name="time" type="time" value="{{ form_values.time }}" required>
+    </div>
+
+    {% if appointment.kind == 'consultation' %}
+    <div class="field">
+      <label for="room">Consulting room</label>
+      <select id="room" name="room" required>
+        <option value="1" {% if form_values.room|string == '1' %}selected{% endif %}>Room 1</option>
+        <option value="2" {% if form_values.room|string == '2' %}selected{% endif %}>Room 2</option>
+      </select>
+    </div>
+    {% else %}
+    <div class="field">
+      <label for="estimated_hours">Estimated duration in hours</label>
+      <input id="estimated_hours" name="estimated_hours" type="number" min="0.5" step="0.5"
+             value="{{ form_values.estimated_hours }}" required>
+    </div>
+    {% endif %}
+
+    <button type="submit">Move appointment</button>
+  </form>
+  {% else %}
+  <p class="hint">Only a live booking can be rescheduled. Cancelled, completed and no-show records are kept as history.</p>
+  {% endif %}
+</section>
+{% endblock %}

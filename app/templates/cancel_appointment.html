@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Cancel appointment · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Cancel appointment</h1>
+  <p>
+    Cancelling changes the booking status. It does not delete the appointment record.
+  </p>
+</section>
+
+{% if changed %}
+<div class="alert alert-ok" role="status">
+  <p><strong>Appointment cancelled.</strong></p>
+  <p>The record remains available in the appointment history.</p>
+</div>
+{% elif attempted %}
+<div class="alert alert-error" role="status">
+  {% if appointment.status == 'cancelled' %}
+  <p><strong>This appointment was already cancelled.</strong></p>
+  {% else %}
+  <p><strong>This appointment cannot be cancelled.</strong></p>
+  <p>Only a live booking can be cancelled; completed and no-show records are kept as history.</p>
+  {% endif %}
+</div>
+{% endif %}
+
+<section class="panel">
+  <h2>Appointment #{{ appointment.id }}</h2>
+  <dl class="summary">
+    <dt>Client</dt>
+    <dd>{{ appointment.client.name }}</dd>
+    <dt>Date</dt>
+    <dd>{{ appointment.date.strftime('%d %b %Y') }}</dd>
+    <dt>Time</dt>
+    <dd>{{ appointment.start_time.strftime('%H:%M') }}</dd>
+    <dt>Kind</dt>
+    <dd>{% if appointment.kind == 'consultation' %}Consultation{% else %}Farm visit{% endif %}</dd>
+    <dt>Status</dt>
+    <dd>{{ appointment.status|replace('_', ' ')|title }}</dd>
+  </dl>
+
+  {% if appointment.status == 'booked' %}
+  <form method="post">
+    <button type="submit">Cancel this appointment</button>
+  </form>
+  {% elif appointment.status == 'cancelled' %}
+  <p class="hint">Cancelled records stay visible and are distinguishable from live bookings.</p>
+  {% else %}
+  <p class="hint">Completed and no-show appointments are protected from cancellation.</p>
+  {% endif %}
+</section>
+{% endblock %}

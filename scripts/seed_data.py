@@ -112,13 +112,13 @@ def seed(reset=False):
         db.session.add_all(
             [
                 Appointment(kind=FARM_VISIT, status=STATUS_BOOKED, client=petrie, farm_property=kalinga,
-                            date=run_day, start_time=time(11, 15), estimated_hours=Decimal("3.0"),
+                            date=run_day, start_time=time(11, 15), estimated_hours=Decimal("3.0"), head_count=120,
                             reason="Preg test, 120 head"),
                 Appointment(kind=FARM_VISIT, status=STATUS_BOOKED, client=sanderson, farm_property=willow_bend,
-                            date=run_day, start_time=time(14, 45), estimated_hours=Decimal("1.0"),
+                            date=run_day, start_time=time(14, 45), estimated_hours=Decimal("1.0"), head_count=4,
                             reason="Bull soundness, 4 head"),
                 Appointment(kind=FARM_VISIT, status=STATUS_BOOKED, client=ironbark, farm_property=ironbark_park,
-                            date=run_day, start_time=time(16, 0), estimated_hours=Decimal("1.5"),
+                            date=run_day, start_time=time(16, 0), estimated_hours=Decimal("1.5"), head_count=1,
                             reason="Lame cow + calf marking check"),
             ]
         )
