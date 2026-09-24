@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Farm visit booked — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Farm visit booked</h1>
+  <p>{{ appointment.farm_property.name }} is in the green diary for
+    {{ appointment.date.strftime('%A %d %B %Y') }}.</p>
+</section>
+
+<section class="panel">
+  <dl class="summary">
+    <dt>Property</dt><dd>{{ appointment.farm_property.name }} ({{ appointment.farm_property.locality }})</dd>
+    <dt>Client</dt><dd>{{ appointment.client.name }} · {{ appointment.client.phone }}</dd>
+    <dt>Day</dt><dd>{{ appointment.date.strftime('%A %d %B %Y') }}</dd>
+    <dt>Start</dt><dd>{{ appointment.start_time.strftime('%H:%M') }}</dd>
+    <dt>Estimate</dt><dd>{{ hours_label }} on the road</dd>
+    {% if appointment.farm_property.access_notes %}
+      <dt>Access</dt><dd>{{ appointment.farm_property.access_notes }}</dd>
+    {% endif %}
+    {% if appointment.reason %}<dt>Reason</dt><dd>{{ appointment.reason }}</dd>{% endif %}
+    <dt>Status</dt><dd>{{ appointment.status }}</dd>
+  </dl>
+  <p class="hint">Reference: appointment #{{ appointment.id }}.</p>
+  <p>
+    <a class="button" href="{{ url_for('farm_visits.new_farm_visit', date=appointment.date.isoformat()) }}">
+      Book another farm visit</a>
+  </p>
+</section>
+{% endblock %}

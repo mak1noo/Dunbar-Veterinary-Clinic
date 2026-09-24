@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Book a farm visit — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Book a farm visit</h1>
+  <p>Against a property, with the time the vet leaves and an estimate of how
+    long the job takes. Farm visits do not take a consulting slot.</p>
+</section>
+
+{% if problems %}
+  <div class="alert alert-error">
+    <p>This booking cannot go ahead yet:</p>
+    <ul>
+      {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>1. Choose the day</h2>
+  <form class="inline-form" method="get" action="{{ url_for('farm_visits.new_farm_visit') }}">
+    <span class="field">
+      <label for="date">Visit day</label>
+      <input type="date" id="date" name="date" value="{{ day.isoformat() }}">
+    </span>
+    <button type="submit">Show this day</button>
+  </form>
+  <p class="hint">{{ day.strftime('%A %d %B %Y') }} — the day's farm run is worked in
+    start-time order, the same way the green diary is read.</p>
+</section>
+
+<section class="panel">
+  <h2>2. Book the visit</h2>
+  <form method="post" action="{{ url_for('farm_visits.new_farm_visit') }}">
+    <input type="hidden" name="date" value="{{ day.isoformat() }}">
+
+    <div class="field">
+      <label for="property_id">Property</label>
+      <select id="property_id" name="property_id" required
+              data-error="Please choose the property the visit is for.">
+        <option value="">— choose the property —</option>
+        {% for client_name, properties in property_groups %}
+          <optgroup label="{{ client_name }}">
+            {% for record in properties %}
+              <option value="{{ record.id }}"
+                {%- if chosen.get('property_id') == record.id|string %} selected{% endif %}>
+                {{- record.name }} ({{ record.locality }})</option>
+            {% endfor %}
+          </optgroup>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="start_time">Start time</label>
+      <input type="time" id="start_time" name="start_time" step="900" required
+             data-error="Please enter the time the vet leaves for the property."
+             value="{{ chosen.get('start_time', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="estimated_hours">Estimated duration</label>
+      <select id="estimated_hours" name="estimated_hours" required
+              data-error="Please choose an estimated duration.">
+        <option value="">— choose the hours on the road —</option>
+        {% for choice in hour_choices %}
+          <option value="{{ choice.value }}"
+            {%- if chosen.get('estimated_hours') == choice.value %} selected{% endif %}>
+            {{- choice.label }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint">Half-hour steps, as the diary is kept.</p>
+    </div>
+
+    <div class="field">
+      <label for="reason">Reason (optional)</label>
+      <input type="text" id="reason" name="reason" maxlength="200"
+             value="{{ chosen.get('reason', '') }}" placeholder="e.g. Preg test, 120 head">
+    </div>
+
+    <button class="primary" type="submit">Book this farm visit</button>
+  </form>
+</section>
+
+<script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+{% endblock %}
