@@ -21,6 +21,29 @@
   </div>
 {% endif %}
 
+{% if updated_animal %}
+  <div class="alert alert-ok">
+    <p>The changes to {{ updated_animal.name }} have been saved to the register.</p>
+  </div>
+{% endif %}
+
+{% if changed_animal %}
+  <div class="alert alert-ok">
+    {% if changed_animal.active %}
+      <p>{{ changed_animal.name }} is back on the books and can be booked again.</p>
+    {% else %}
+      <p>{{ changed_animal.name }} has been taken off the books, so it is no
+        longer offered when a consultation is booked.</p>
+      {% if live_bookings %}
+        <p>{{ live_bookings|length }} appointment{{ "s" if live_bookings|length != 1 else "" }}
+          already in the book for {{ changed_animal.name }}
+          {{ "are" if live_bookings|length != 1 else "is" }} unchanged.</p>
+      {% endif %}
+      <p>{{ record.name }}'s record is not affected.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
 <section class="panel">
   <h2>Contact details</h2>
   <dl class="summary">
@@ -45,14 +68,24 @@
           <th scope="col">Name</th>
           <th scope="col">Species</th>
           <th scope="col">Breed</th>
+          <th scope="col">On the books</th>
+          <th scope="col">Manage</th>
         </tr>
       </thead>
       <tbody>
         {% for animal in record.animals %}
-          <tr>
+          <tr{% if not animal.active %} class="off-the-books"{% endif %}>
             <td>{{ animal.name }}</td>
             <td>{{ animal.species }}</td>
             <td>{{ animal.breed or "—" }}</td>
+            <td>{{ "Yes" if animal.active else "Removed" }}</td>
+            <td class="row-actions">
+              <a href="{{ url_for('clients.edit_animal', client_id=record.id, animal_id=animal.id) }}">Change details</a>
+              <form method="post" action="{{ url_for('clients.set_animal_active', client_id=record.id, animal_id=animal.id) }}">
+                <input type="hidden" name="active" value="{{ 0 if animal.active else 1 }}">
+                <button type="submit">{{ "Remove" if animal.active else "Put back" }}</button>
+              </form>
+            </td>
           </tr>
         {% endfor %}
       </tbody>

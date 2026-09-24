@@ -377,3 +377,30 @@ button:hover,
 }
 
 .actions .quiet:hover { text-decoration: underline; }
+
+/* Correcting an animal record, and taking one off the books (story -43). */
+.records .row-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  white-space: nowrap;
+}
+
+.records .row-actions form { margin: 0; }
+
+.records .row-actions button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--green);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.records .row-actions button:hover { text-decoration: underline; }
+
+.records tr.off-the-books td { color: var(--muted); }
+
+.records tr.off-the-books a,
+.records tr.off-the-books button { color: var(--muted); }

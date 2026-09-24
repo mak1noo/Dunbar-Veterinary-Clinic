@@ -17,6 +17,7 @@ half of the guarantee: this module stops a bad row before it is built, the
 model stops it before it is stored.
 """
 import re
+from datetime import date, datetime
 
 NAME_MAX = 120  # matches Client.name
 ADDRESS_MAX = 255  # matches Client.postal_address
@@ -83,3 +84,147 @@ def client_columns(*, name, phone, email=None, postal_address=None, notes=None, 
         "notes": clean(notes) or None,
         "sms_consent": bool(sms_consent),
     }
+
+
+# --- Correcting an animal record, and taking one off the books (story -43) --
+#
+# The rules an animal is recorded under are the rules its details are put right
+# under, for the same reason the client rules are shared between the
+# registration form and the correction form: a correction is not a way around
+# the rules.
+#
+# "Removing" an animal is never a delete. The animal is taken off the books, so
+# it stops being offered for new work, while its own row, its appointment
+# history and the client it belongs to all stay exactly where they are.
+
+SPECIES_MAX = 60  # matches Animal.species
+BREED_MAX = 120  # matches Animal.breed
+MICROCHIP_MAX = 40  # matches Animal.microchip
+
+SEXES = ("female", "male", "unknown")
+
+
+def parse_date_of_birth(value):
+    """Read a date of birth off the form; return (date or None, problem or None).
+
+    The form posts a date field as YYYY-MM-DD. A date that cannot be read, or
+    one that has not happened yet, is a problem rather than something to guess
+    at: an animal entered with the wrong date of birth is worse than one with
+    no date on file at all.
+    """
+    value = clean(value)
+    if not value:
+        return None, None
+    try:
+        born = datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None, "Enter the date of birth as YYYY-MM-DD, for example 2019-04-17."
+    if born > date.today():
+        return None, "The date of birth cannot be in the future."
+    return born, None
+
+
+def validate_animal(*, name, species, breed=None, sex=None, date_of_birth=None, microchip=None):
+    """Return the problems with an animal record (empty list = valid).
+
+    The story only insists on a name and a species ("record at minimum the
+    animal name and species"), and that is what the form marks required. The
+    rest of the checks are here so that a field the front desk did fill in is
+    not silently stored in a shape nobody meant: a mis-typed date of birth, or
+    a sex that is not one of the choices offered. Correcting a record runs the
+    same checks as recording one, so a correction is not a way around them.
+    """
+    problems = []
+
+    name = clean(name)
+    if not name:
+        problems.append("Enter the animal's name.")
+    elif len(name) > NAME_MAX:
+        problems.append(f"Keep the animal's name to {NAME_MAX} characters or fewer.")
+
+    species = clean(species)
+    if not species:
+        problems.append("Enter the species, for example dog, cat or horse.")
+    elif len(species) > SPECIES_MAX:
+        problems.append(f"Keep the species to {SPECIES_MAX} characters or fewer.")
+
+    breed = clean(breed)
+    if len(breed) > BREED_MAX:
+        problems.append(f"Keep the breed to {BREED_MAX} characters or fewer.")
+
+    sex = clean(sex).lower()
+    if sex and sex not in SEXES:
+        problems.append("Choose female, male or unknown for the sex.")
+
+    microchip = clean(microchip)
+    if len(microchip) > MICROCHIP_MAX:
+        problems.append(f"Keep the microchip number to {MICROCHIP_MAX} characters or fewer.")
+
+    _, born_problem = parse_date_of_birth(date_of_birth)
+    if born_problem:
+        problems.append(born_problem)
+
+    return problems
+
+
+def animal_columns(*, name, species, breed=None, sex=None, date_of_birth=None,
+                   desexed=False, microchip=None, notes=None):
+    """The cleaned column values for an animal record.
+
+    client_id is deliberately not in here. An animal belongs to a client, and
+    the only way to reach this function is through that client's own page, so
+    the route passes the id of the client it already has in hand rather than
+    taking one from the form.
+    """
+    born, _ = parse_date_of_birth(date_of_birth)
+    return {
+        "name": clean(name),
+        "species": clean(species),
+        "breed": clean(breed) or None,
+        "sex": clean(sex).lower() or None,
+        "desexed": bool(desexed),
+        "date_of_birth": born,
+        "microchip": clean(microchip) or None,
+        "notes": clean(notes) or None,
+    }
+
+
+def animal_details(animal):
+    """An animal's own values in the shape the correction form's fields expect.
+
+    The date goes back to the form as YYYY-MM-DD, because that is what a date
+    input reads and writes, and a value that was never filled in comes back as
+    an empty box rather than the word None.
+    """
+    return {
+        "name": animal.name,
+        "species": animal.species,
+        "breed": animal.breed or "",
+        "sex": animal.sex or "",
+        "date_of_birth": animal.date_of_birth.isoformat() if animal.date_of_birth else "",
+        "desexed": animal.desexed,
+        "microchip": animal.microchip or "",
+        "notes": animal.notes or "",
+    }
+
+
+def remove_animal(animal):
+    """Take an animal off the books, without deleting anything.
+
+    Returns True when the animal was on the books and has just been taken off,
+    and False when it was already off. The caller owns the transaction, the
+    same way the scheduling rules leave the commit to their caller: the flag on
+    the row is the whole change.
+    """
+    if not animal.active:
+        return False
+    animal.active = False
+    return True
+
+
+def restore_animal(animal):
+    """Put an animal back on the books. Returns True when it changed."""
+    if animal.active:
+        return False
+    animal.active = True
+    return True

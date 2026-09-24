@@ -51,3 +51,14 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external
   references and persistence of records across an application restart.
+
+- 2026-09-24 — Correcting an animal, and taking one off the books
+  (`MSD426GXUST3-43`): a client's animal list now leads to a form that writes a
+  correction over the animal, under the same rules the animal was recorded
+  under, and offers a Remove button that takes an animal off the books. Removing
+  is a flag and never a delete: the row, everything already booked against it and
+  the client it belongs to are left exactly as they are, the front desk is told
+  how many appointments are still in the book for it, and an animal that is off
+  the books stops being offered when a consultation is booked. Automated tests
+  cover the correction, the rejected correction, the wrong-client path, the
+  removal and the return.
