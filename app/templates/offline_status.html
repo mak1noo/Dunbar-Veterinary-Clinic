@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Offline status · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Offline operation status</h1>
+  <p>
+    The appointment book runs on the clinic computer and stores its records in a
+    local SQLite database. It does not need a CDN, API, online database or other
+    internet service at run time.
+  </p>
+</section>
+
+{% if report.ok %}
+<div class="alert alert-ok" role="status">
+  <strong>Offline ready.</strong>
+  Local storage is active and no external runtime assets were found.
+</div>
+{% else %}
+<div class="alert alert-error" role="alert">
+  <strong>Offline check needs attention.</strong>
+</div>
+{% endif %}
+
+<section class="panel">
+  <h2>Runtime checks</h2>
+  <dl class="summary">
+    <dt>Database engine</dt>
+    <dd>{{ report.database_engine }}</dd>
+    <dt>Local database</dt>
+    <dd>{{ 'Yes' if report.local_database else 'No' }}</dd>
+    <dt>Persists across restarts</dt>
+    <dd>{{ 'Yes' if report.persistent_database else 'No' }}</dd>
+    <dt>External runtime references</dt>
+    <dd>
+      {% if report.external_references %}
+        {{ report.external_references|join(', ') }}
+      {% else %}
+        None
+      {% endif %}
+    </dd>
+  </dl>
+</section>
+{% endblock %}
