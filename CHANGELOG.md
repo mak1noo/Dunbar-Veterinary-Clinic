@@ -51,3 +51,9 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external
   references and persistence of records across an application restart.
+- 2026-09-25 — Farm properties (`MSD426GXUST3-44`): the front desk can record a
+  client's farm property with the required property name and locality plus an
+  optional usual run day, from the client's own page; the page lists every
+  property belonging to that client and a client can hold animals, properties,
+  both or neither, with the rules in `app/services/records.py` and automated
+  tests.
