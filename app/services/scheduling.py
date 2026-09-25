@@ -31,6 +31,8 @@ CONSULTING_WINDOWS = {
 }
 
 FARM_VISIT_STEP_HOURS = 0.5
+FARM_VISIT_STEP_MINUTES = 15
+FARM_VISIT_MAX_HOURS = 8
 
 
 def is_consulting_day(day):
@@ -81,9 +83,19 @@ def validate_consultation(*, day, start, animal, room, existing_bookings=()):
     return problems
 
 
-def validate_farm_visit(*, day, start, farm_property, estimated_hours):
-    """Return the problems with a proposed farm visit (empty list = valid)."""
+def validate_farm_visit(*, day, start, farm_property, estimated_hours, today=None):
+    """Return the problems with a proposed farm visit (empty list = valid).
+
+    ``today`` is optional, like in :func:`validate_consultation`, so the same
+    rules can serve the booking form, the reschedule form and the tests.
+    """
     problems = []
+    if today is not None and day is not None and day < today:
+        problems.append("That day is in the past. Pick a later day.")
+    if start is not None and start.minute % FARM_VISIT_STEP_MINUTES != 0:
+        problems.append(
+            "Farm visits start on the quarter hour, as the diary is kept (for example 11:15)."
+        )
     if farm_property is None:
         problems.append("A farm visit must be booked against a property.")
     if estimated_hours is None:
@@ -96,6 +108,8 @@ def validate_farm_visit(*, day, start, farm_property, estimated_hours):
         else:
             if hours <= 0:
                 problems.append("The estimated duration must be greater than zero.")
+            elif hours > FARM_VISIT_MAX_HOURS:
+                problems.append(f"A farm visit cannot be longer than {FARM_VISIT_MAX_HOURS} hours.")
             elif abs(hours / FARM_VISIT_STEP_HOURS - round(hours / FARM_VISIT_STEP_HOURS)) > 1e-9:
                 problems.append("The estimated duration must be in half-hour steps.")
     return problems

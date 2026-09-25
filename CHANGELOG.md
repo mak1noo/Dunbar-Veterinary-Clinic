@@ -55,3 +55,6 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   books a visit against a property with a start time and an estimated duration
   in half-hour steps, keeps the client on the booking through the property, and
   ends on a confirmation page that repeats the access notes.
+- 2026-09-25 — Farm visit rules (`MSD426GXUST3-49`): a visit cannot be booked
+  in the past, start times must sit on the quarter hour as the diary is kept,
+  and a visit cannot be estimated at more than a working day.

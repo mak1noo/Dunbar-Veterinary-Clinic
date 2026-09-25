@@ -124,3 +124,33 @@ def test_the_duration_must_be_in_half_hour_steps(app, client, stony_creek):
 
 def test_an_unknown_visit_is_a_404(client):
     assert client.get("/farm-visits/999").status_code == 404
+
+
+def test_a_visit_in_the_past_is_rejected(app, client, stony_creek):
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    response = book(client, stony_creek, day=yesterday)
+    assert "in the past" in response.get_data(as_text=True)
+    with app.app_context():
+        assert Appointment.query.count() == 0
+
+
+def test_the_start_time_must_be_on_the_quarter_hour(app, client, stony_creek):
+    response = book(client, stony_creek, start="11:10")
+    assert "quarter hour" in response.get_data(as_text=True)
+    with app.app_context():
+        assert Appointment.query.count() == 0
+
+
+def test_a_visit_longer_than_a_working_day_is_rejected(app, client, stony_creek):
+    response = book(client, stony_creek, hours="9.0")
+    assert "cannot be longer than 8 hours" in response.get_data(as_text=True)
+    with app.app_context():
+        assert Appointment.query.count() == 0
+
+
+def test_quarter_hour_starts_are_accepted(app, client, stony_creek):
+    assert book(client, stony_creek, start="16:45", hours="1.5").status_code == 303
+    with app.app_context():
+        appointment = Appointment.query.one()
+        assert appointment.start_time.strftime("%H:%M") == "16:45"
+        assert appointment.estimated_hours == Decimal("1.5")
