@@ -102,6 +102,7 @@ def _problems(day, start, farm_property, hours):
             start=start,
             farm_property=farm_property,
             estimated_hours=hours,
+            today=date.today(),
         )
     )
     return problems
