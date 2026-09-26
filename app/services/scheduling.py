@@ -132,6 +132,68 @@ def free_rooms_by_slot(day, existing_bookings, rooms=CONSULTING_ROOMS):
     }
 
 
+def format_slot_label(value):
+    """Format a slot the way the appointment book writes it: 8:30 am."""
+    hour = value.hour % 12 or 12
+    suffix = "am" if value.hour < 12 else "pm"
+    return f"{hour}:{value.minute:02d} {suffix}"
+
+
+def day_schedule(day, bookings=None):
+    """Lay the consulting day out slot by slot, one cell per consulting room.
+
+    ``bookings`` is any iterable of appointment-like objects with ``status``,
+    ``room`` and ``start_time`` attributes; when it is omitted the day's live
+    consultations are read from the database. Each row carries the slot's
+    label and one cell per consulting room: the booking that occupies the
+    room, or ``None`` when the room is free for that slot. Cancelled bookings
+    do not occupy a cell, matching the booking rules.
+
+    The result also carries the day's headline numbers so the front desk can
+    see at a glance how full the day is. On a day the clinic does not consult
+    (Sunday, or a date the timetable does not open) the result is closed and
+    has no rows.
+    """
+    slots = slots_for_day(day)
+    if not slots:
+        return {"day": day, "open": False, "rows": [], "booked": 0, "free": 0, "capacity": 0}
+    if bookings is None:
+        bookings = Appointment.query.filter(
+            Appointment.kind == CONSULTATION,
+            Appointment.date == day,
+            Appointment.status == STATUS_BOOKED,
+        ).all()
+    slot_set = set(slots)
+    occupied = {
+        (booking.start_time, booking.room): booking
+        for booking in bookings
+        if booking.status == STATUS_BOOKED
+        and booking.room in CONSULTING_ROOMS
+        and booking.start_time in slot_set
+    }
+    rows = [
+        {
+            "slot": slot,
+            "label": format_slot_label(slot),
+            "cells": [
+                {"room": room, "booking": occupied.get((slot, room))}
+                for room in CONSULTING_ROOMS
+            ],
+        }
+        for slot in slots
+    ]
+    capacity = len(slots) * len(CONSULTING_ROOMS)
+    booked = len(occupied)
+    return {
+        "day": day,
+        "open": True,
+        "rows": rows,
+        "booked": booked,
+        "free": capacity - booked,
+        "capacity": capacity,
+    }
+
+
 def cancel_appointment(appointment):
     """Mark a live booking cancelled without deleting its record.
 

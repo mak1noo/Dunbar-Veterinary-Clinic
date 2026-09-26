@@ -377,3 +377,30 @@ button:hover,
 }
 
 .actions .quiet:hover { text-decoration: underline; }
+
+/* The day view — taken and free consulting cells (story MSD426GXUST3-50). */
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+}
+
+.day-nav .hint { margin-left: auto; }
+
+.day-grid { min-width: 640px; }
+.day-grid .slot-free { background: #fbfaf6; }
+.day-grid .slot-taken { background: var(--green-soft); }
+.day-grid .slot-taken a {
+  color: var(--green);
+  font-weight: 600;
+  text-decoration: none;
+}
+.day-grid .slot-taken a:hover { text-decoration: underline; }
+.day-grid .free-label {
+  color: var(--muted);
+  font-size: 14px;
+  font-style: italic;
+}

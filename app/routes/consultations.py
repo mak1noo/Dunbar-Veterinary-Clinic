@@ -15,6 +15,7 @@ from sqlalchemy.exc import IntegrityError
 from app.models import CONSULTATION, STATUS_BOOKED, Animal, Appointment, db
 from app.services.scheduling import (
     CONSULTING_ROOMS,
+    format_slot_label,
     free_rooms_by_slot,
     slots_for_day,
     validate_consultation,
@@ -24,13 +25,6 @@ consultations_bp = Blueprint("consultations", __name__, url_prefix="/consultatio
 
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M"
-
-
-def _slot_label(value):
-    """Format a slot the way the appointment book writes it: 8:30 am."""
-    hour = value.hour % 12 or 12
-    suffix = "am" if value.hour < 12 else "pm"
-    return f"{hour}:{value.minute:02d} {suffix}"
 
 
 def _parse_date(raw, fallback):
@@ -90,7 +84,7 @@ def _form_context(day, chosen):
         slots.append(
             {
                 "value": slot.strftime(TIME_FORMAT),
-                "label": _slot_label(slot),
+                "label": format_slot_label(slot),
                 "free_rooms": len(rooms_free),
                 "availability": _availability_label(rooms_free),
             }
