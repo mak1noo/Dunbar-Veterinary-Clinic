@@ -119,6 +119,35 @@ scripts/seed_data.py     sample data from the case study documents
 tests/                   pytest suite
 ```
 
+## Client register (record module)
+
+The record module is the part of the system the front desk works in all day: the client
+register, and everything filed against a client. It is epic **E1** in Jira
+(`MSD426GXUST3-39` to `-45`).
+
+What it covers:
+
+- **Create a client** with a full name and a phone number. Email, address and notes are
+  optional. Required fields are validated and the messages name the field that is wrong.
+- **Find a client** by name or by phone number. The search ignores case, and a search that
+  matches nothing says so rather than looking like an empty register.
+- **Open a client record and correct the contact details**, reusing the same validation as
+  the create form, so a corrected record keeps its id and every appointment made against it.
+- **Stop work for a client** by clearing the `active` flag. This is a state and not a delete:
+  the record stays, the appointments already made stay, and a search still finds the row,
+  marked `Stopped`, because the person who knows the client exists is the person searching.
+  A stopped client can be put back on the active list the same way.
+
+Files:
+
+```
+app/routes/clients.py      the client routes: list and search, create, detail, edit, active flag
+app/templates/clients/     list.html, create.html, detail.html, edit.html
+tests/test_clients.py      creating a client, and the required-field validation
+tests/test_client_edits.py opening a record and correcting it
+```
+
+One route per user story, one branch per story, and one pull request per branch.
 ## Team workflow
 
 Every user story is delivered on a branch named `story/MSD426GXUST3-<number>-<short-name>`,
