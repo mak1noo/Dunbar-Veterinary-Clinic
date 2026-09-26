@@ -56,3 +56,7 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external
   references and persistence of records across an application restart.
+- 2026-09-24 — Farm visit booking (`MSD426GXUST3-48`): the green diary page
+  books a visit against a property with a start time and an estimated duration
+  in half-hour steps, keeps the client on the booking through the property, and
+  ends on a confirmation page that repeats the access notes.
