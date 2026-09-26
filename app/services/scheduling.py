@@ -111,7 +111,7 @@ def validate_farm_visit(*, day, start, farm_property, estimated_hours, today=Non
             if hours <= 0:
                 problems.append("The estimated duration must be greater than zero.")
             elif abs(hours / FARM_VISIT_STEP_HOURS - round(hours / FARM_VISIT_STEP_HOURS)) > 1e-9:
-                    problems.append("The estimated duration must be in half-hour steps.")
+                problems.append("The estimated duration must be in half-hour steps.")
     return problems
 
 
