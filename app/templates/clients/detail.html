@@ -21,6 +21,24 @@
   </div>
 {% endif %}
 
+{% if changed %}
+  <div class="alert alert-ok">
+    {% if record.active %}
+      <p>{{ record.name }} is back on the active list and can be booked in again.</p>
+    {% else %}
+      <p>Work for {{ record.name }} has been stopped. The record stays on the
+        register, with every booking already made against it.</p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if not record.active %}
+  <div class="alert alert-stopped">
+    <p>This client is stopped: the record is kept, and a search still finds it,
+      marked, but no new work is offered against them.</p>
+  </div>
+{% endif %}
+
 <section class="panel">
   <h2>Contact details</h2>
   <dl class="summary">
@@ -30,10 +48,32 @@
     <dt>Postal address</dt><dd>{{ record.postal_address or "—" }}</dd>
     <dt>SMS reminders</dt><dd>{{ "Yes" if record.sms_consent else "No" }}</dd>
     <dt>Notes</dt><dd>{{ record.notes or "—" }}</dd>
+    <dt>Status</dt>
+    <dd>{% if record.active %}<span class="tag tag-active">Active</span>{% else %}<span class="tag tag-stopped">Stopped</span>{% endif %}</dd>
     {% if record.created_at %}
       <dt>On file since</dt><dd>{{ record.created_at.strftime('%d %B %Y') }}</dd>
     {% endif %}
   </dl>
+</section>
+
+<section class="panel">
+  <h2>Work for this client</h2>
+  {% if record.active %}
+    <p>{{ record.name }} is on the active list, so consultations and farm visits
+      can be booked against this record.</p>
+    <form method="post" action="{{ url_for('clients.set_client_active', client_id=record.id) }}">
+      <input type="hidden" name="active" value="0">
+      <button class="button button-quiet" type="submit">Stop work for this client</button>
+    </form>
+  {% else %}
+    <p>Work for {{ record.name }} is stopped. Nothing has been deleted: the
+      record and the bookings already made against it stay on file, and the
+      client is not offered when new work is booked in.</p>
+    <form method="post" action="{{ url_for('clients.set_client_active', client_id=record.id) }}">
+      <input type="hidden" name="active" value="1">
+      <button class="button" type="submit">Put this client back on the active list</button>
+    </form>
+  {% endif %}
 </section>
 
 <section class="panel">

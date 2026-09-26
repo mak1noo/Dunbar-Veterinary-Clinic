@@ -6,11 +6,28 @@
 <section class="intro intro-row">
   <div>
     <h1>Clients</h1>
-    <p>{{ clients|length }} on file. Consultations and farm visits are both
-      booked against a client record from this list.</p>
+    {% if term %}
+      <p>{{ clients|length }} record{{ "" if clients|length == 1 else "s" }} on
+        the register matching "{{ term }}".</p>
+    {% else %}
+      <p>{{ clients|length }} on file. Consultations and farm visits are both
+        booked against a client record from this list.</p>
+    {% endif %}
   </div>
   <a class="button" href="{{ url_for('clients.new_client') }}">Add a client</a>
 </section>
+
+<form class="inline-form" method="get" action="{{ url_for('clients.list_clients') }}">
+  <div class="field">
+    <label for="q">Find a client</label>
+    <input type="search" id="q" name="q" value="{{ term }}" maxlength="120"
+           placeholder="Name or phone number">
+  </div>
+  <button class="button" type="submit">Search</button>
+  {% if term %}
+    <a class="button button-quiet" href="{{ url_for('clients.list_clients') }}">Show every client</a>
+  {% endif %}
+</form>
 
 {% if added %}
   <div class="alert alert-ok">
@@ -28,6 +45,7 @@
         <th scope="col">Email</th>
         <th scope="col">Postal address</th>
         <th scope="col">Notes</th>
+        <th scope="col">Status</th>
       </tr>
     </thead>
     <tbody>
@@ -38,10 +56,21 @@
           <td>{{ record.email or "—" }}</td>
           <td>{{ record.postal_address or "—" }}</td>
           <td>{{ record.notes or "—" }}</td>
+          <td>
+            {% if record.active %}
+              <span class="tag tag-active">Active</span>
+            {% else %}
+              <span class="tag tag-stopped">Stopped</span>
+            {% endif %}
+          </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+{% elif term %}
+  <p class="hint">Nothing on the register matches "{{ term }}". Try part of the
+    name, or the number the client rings from, or
+    <a href="{{ url_for('clients.list_clients') }}">show every client</a>.</p>
 {% else %}
   <p class="hint">No clients yet. Add the first one to start booking work.</p>
 {% endif %}
