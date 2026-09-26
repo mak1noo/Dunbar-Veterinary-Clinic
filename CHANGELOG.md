@@ -52,6 +52,12 @@ project uses semantic-ish version numbers (v0.x during delivery, v1.0 at handove
   record is changed in place so the client id and every booking already made
   against it survive. Automated tests cover the read path, the write path and
   the rejected paths.
+- 2026-09-26 — The day view (`MSD426GXUST3-50`): one consulting day laid out
+  slot by slot and room by room, with every fifteen-minute cell marked as
+  taken (the animal and client, linking through to the booking) or free, and
+  headline counts for how full the day is. The page follows the counter book:
+  previous/next day navigation, and a plain "closed" note on days the clinic
+  does not consult instead of an empty grid.
 - 2026-09-23 — Offline operation (`MSD426GXUST3-55`): an offline status page
   reports local SQLite storage and scans runtime templates/assets for external
   HTTP dependencies. Tests verify local configuration, no runtime external

@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Day view · Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="page-head">
+  <div>
+    <p class="eyebrow">Consulting book</p>
+    <h1>{{ selected_date.strftime('%A, %d %B %Y') }}</h1>
+    <p class="lede">
+      Every fifteen-minute slot and both consulting rooms, taken or free, the
+      way the counter book shows the day.
+    </p>
+  </div>
+
+  <form class="date-filter" method="get" action="{{ url_for('schedule.day_view') }}">
+    <label for="day-view-date">Choose a day</label>
+    <div class="date-filter-controls">
+      <input id="day-view-date" type="date" name="date" value="{{ selected_date.isoformat() }}" required>
+      <button type="submit">Show this day</button>
+    </div>
+  </form>
+</section>
+
+{% if date_error %}
+<div class="alert alert-error" role="alert">{{ date_error }}</div>
+{% endif %}
+
+<p class="day-nav">
+  <a class="button-link" href="{{ url_for('schedule.day_view', date=previous_date.isoformat()) }}">← Previous day</a>
+  <a class="button-link" href="{{ url_for('schedule.day_view', date=next_date.isoformat()) }}">Next day →</a>
+  {% if grid.open %}
+  <span class="hint">{{ grid.booked }} of {{ grid.capacity }} cells taken · {{ grid.free }} free</span>
+  {% endif %}
+</p>
+
+{% if grid.open %}
+<div class="table-wrap">
+  <table class="data-table day-grid">
+    <thead>
+      <tr>
+        <th scope="col">Time</th>
+        {% for cell in grid.rows[0].cells %}
+        <th scope="col">Consulting room {{ cell.room }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in grid.rows %}
+      <tr>
+        <td class="time-cell">{{ row.label }}</td>
+        {% for cell in row.cells %}
+        <td class="{{ 'slot-taken' if cell.booking else 'slot-free' }}">
+          {% if cell.booking %}
+          <a href="{{ url_for('consultations.show_consultation', appointment_id=cell.booking.id) }}">{{ cell.booking.animal.name }}</a>
+          <span class="secondary-line">{{ cell.booking.client.name }}</span>
+          {% else %}
+          <span class="free-label">Free</span>
+          {% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<section class="empty-state" aria-live="polite">
+  <h2>The clinic is closed for consultations</h2>
+  <p>There are no consulting slots on this day. Farm visits for the day are on the
+    <a href="{{ url_for('main.farm_run', date=selected_date.isoformat()) }}">farm run</a> page.</p>
+</section>
+{% endif %}
+{% endblock %}

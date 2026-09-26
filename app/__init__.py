@@ -30,6 +30,7 @@ def create_app(config=None):
     from app.routes.main import main_bp
     from app.routes.offline import offline_bp
     from app.routes.rescheduling import rescheduling_bp
+    from app.routes.schedule import schedule_bp
 
     app.register_blueprint(appointments_bp)
     app.register_blueprint(clients_bp)
@@ -37,6 +38,7 @@ def create_app(config=None):
     app.register_blueprint(offline_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(rescheduling_bp)
+    app.register_blueprint(schedule_bp)
 
     if app.config.get("CREATE_TABLES_ON_START", True):
         with app.app_context():
