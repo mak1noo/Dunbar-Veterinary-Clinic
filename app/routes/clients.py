@@ -1,6 +1,6 @@
 """Client records: the register of households and farm businesses.
 
-Stories MSD426GXUST3-39 and MSD426GXUST3-40. Nothing can be booked, a
+Stories MSD426GXUST3-39, MSD426GXUST3-40 and MSD426GXUST3-41. Nothing can be booked, a
 consultation in one of the two rooms or a farm visit against a property, until
 the client is on file, so this is the screen the front desk uses first.
 
@@ -17,8 +17,8 @@ correction over the top of it.
 """
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
-from app.models import Client, db
-from app.services.records import client_columns, validate_client
+from app.models import Animal, Client, db
+from app.services.records import animal_columns, client_columns, validate_animal, validate_client
 from app.services.scheduling import appointments_for_client
 
 clients_bp = Blueprint("clients", __name__, url_prefix="/clients")
@@ -55,6 +55,32 @@ def _problems_with(chosen):
         phone=chosen["phone"],
         email=chosen["email"],
         postal_address=chosen["postal_address"],
+    )
+
+
+def _animal_submitted():
+    """The animal form values as sent, so a rejected form can be handed back."""
+    return {
+        "name": request.form.get("name", ""),
+        "species": request.form.get("species", ""),
+        "breed": request.form.get("breed", ""),
+        "sex": request.form.get("sex", ""),
+        "date_of_birth": request.form.get("date_of_birth", ""),
+        "desexed": request.form.get("desexed") == "on",
+        "microchip": request.form.get("microchip", ""),
+        "notes": request.form.get("notes", ""),
+    }
+
+
+def _problems_with_animal(chosen):
+    """What is wrong with a submitted animal form, in the order to fix it."""
+    return validate_animal(
+        name=chosen["name"],
+        species=chosen["species"],
+        breed=chosen["breed"],
+        sex=chosen["sex"],
+        date_of_birth=chosen["date_of_birth"],
+        microchip=chosen["microchip"],
     )
 
 
@@ -101,10 +127,16 @@ def create_client():
 def show_client(client_id):
     """One client's page: everything on file, and the way in to change it."""
     record = _record_or_404(client_id)
+    added_animal_id = request.args.get("added_animal", type=int)
+    added_animal = db.session.get(Animal, added_animal_id) if added_animal_id else None
+    if added_animal is not None and added_animal.client_id != record.id:
+        # Only ever highlight an animal that belongs to the client on screen.
+        added_animal = None
     return render_template(
         "clients/detail.html",
         record=record,
         updated=request.args.get("updated") == "1",
+        added_animal=added_animal,
     )
 
 
@@ -151,3 +183,40 @@ def update_client(client_id):
     db.session.commit()
 
     return redirect(url_for("clients.show_client", client_id=record.id, updated=1), code=303)
+
+
+@clients_bp.get("/<int:client_id>/animals/new")
+def new_animal(client_id):
+    """Show the form for recording an animal against one client.
+
+    There is no such thing as an animal without an owner in the register, so
+    there is no top-level form for one: an animal is always added from the
+    client page it belongs to. A client who is not on file has nothing to add
+    to, and gets the same 404 as any other missing record.
+    """
+    record = _record_or_404(client_id)
+    return render_template("animals/create.html", record=record, chosen={}, problems=[])
+
+
+@clients_bp.post("/<int:client_id>/animals/new")
+def create_animal(client_id):
+    """Record the animal against that client, or hand the form back.
+
+    The client comes from the address the form was posted to, never from the
+    form itself. That is what makes "an animal cannot be saved without a
+    client" true rather than merely checked: there is no field to leave blank.
+    """
+    record = _record_or_404(client_id)
+    chosen = _animal_submitted()
+    problems = _problems_with_animal(chosen)
+    if problems:
+        return render_template("animals/create.html", record=record, chosen=chosen, problems=problems), 400
+
+    animal = Animal(client_id=record.id, **animal_columns(**chosen))
+    db.session.add(animal)
+    db.session.commit()
+
+    return redirect(
+        url_for("clients.show_client", client_id=record.id, added_animal=animal.id),
+        code=303,
+    )

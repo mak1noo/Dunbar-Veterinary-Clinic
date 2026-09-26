@@ -377,3 +377,16 @@ button:hover,
 }
 
 .actions .quiet:hover { text-decoration: underline; }
+
+/* Adding an animal to a client record (story MSD426GXUST3-41).
+   Everything else on this page reuses the blocks above. */
+
+.panel-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.panel-head h2 { margin: 0; }

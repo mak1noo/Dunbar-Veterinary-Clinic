@@ -21,6 +21,12 @@
   </div>
 {% endif %}
 
+{% if added_animal %}
+  <div class="alert alert-ok">
+    <p>{{ added_animal.name }} ({{ added_animal.species }}) has been added to this client's record.</p>
+  </div>
+{% endif %}
+
 <section class="panel">
   <h2>Contact details</h2>
   <dl class="summary">
@@ -37,7 +43,10 @@
 </section>
 
 <section class="panel">
-  <h2>Animals</h2>
+  <div class="panel-head">
+    <h2>Animals</h2>
+    <a class="button" href="{{ url_for('clients.new_animal', client_id=record.id) }}">Add an animal</a>
+  </div>
   {% if record.animals %}
     <table class="records">
       <thead>
@@ -45,14 +54,20 @@
           <th scope="col">Name</th>
           <th scope="col">Species</th>
           <th scope="col">Breed</th>
+          <th scope="col">Sex</th>
+          <th scope="col">Born</th>
+          <th scope="col">Microchip</th>
         </tr>
       </thead>
       <tbody>
         {% for animal in record.animals %}
-          <tr>
+          <tr{% if added_animal and animal.id == added_animal.id %} class="just-added"{% endif %}>
             <td>{{ animal.name }}</td>
             <td>{{ animal.species }}</td>
             <td>{{ animal.breed or "—" }}</td>
+            <td>{{ (animal.sex or "—")|capitalize }}</td>
+            <td>{{ animal.date_of_birth.strftime('%d %b %Y') if animal.date_of_birth else "—" }}</td>
+            <td>{{ animal.microchip or "—" }}</td>
           </tr>
         {% endfor %}
       </tbody>
