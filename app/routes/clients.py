@@ -17,8 +17,16 @@ correction over the top of it.
 """
 from flask import Blueprint, abort, redirect, render_template, request, url_for
 
-from app.models import Client, db
-from app.services.records import client_columns, validate_client
+from app.models import Animal, Client, STATUS_BOOKED, db
+from app.services.records import (
+    animal_columns,
+    animal_details,
+    client_columns,
+    remove_animal,
+    restore_animal,
+    validate_animal,
+    validate_client,
+)
 from app.services.scheduling import appointments_for_client
 
 clients_bp = Blueprint("clients", __name__, url_prefix="/clients")
@@ -101,10 +109,17 @@ def create_client():
 def show_client(client_id):
     """One client's page: everything on file, and the way in to change it."""
     record = _record_or_404(client_id)
+    changed_animal = _animal_from_query("animal_changed", record)
     return render_template(
         "clients/detail.html",
         record=record,
         updated=request.args.get("updated") == "1",
+        updated_animal=_animal_from_query("updated_animal", record),
+        changed_animal=changed_animal,
+        live_bookings=(
+            [] if changed_animal is None or changed_animal.active
+            else _live_bookings(changed_animal)
+        ),
     )
 
 
@@ -151,3 +166,131 @@ def update_client(client_id):
     db.session.commit()
 
     return redirect(url_for("clients.show_client", client_id=record.id, updated=1), code=303)
+
+
+def _animal_submitted():
+    """The animal form values as sent, so a rejected form can be handed back."""
+    return {
+        "name": request.form.get("name", ""),
+        "species": request.form.get("species", ""),
+        "breed": request.form.get("breed", ""),
+        "sex": request.form.get("sex", ""),
+        "date_of_birth": request.form.get("date_of_birth", ""),
+        "desexed": request.form.get("desexed") == "on",
+        "microchip": request.form.get("microchip", ""),
+        "notes": request.form.get("notes", ""),
+    }
+
+
+def _problems_with_animal(chosen):
+    """What is wrong with a submitted animal form, in the order to fix it."""
+    return validate_animal(
+        name=chosen["name"],
+        species=chosen["species"],
+        breed=chosen["breed"],
+        sex=chosen["sex"],
+        date_of_birth=chosen["date_of_birth"],
+        microchip=chosen["microchip"],
+    )
+
+
+def _animal_from_query(parameter, record):
+    """The animal named in the query string, when it belongs to this client.
+
+    The banner after a change is driven by the animal the redirect named, and
+    only ever by one that sits on this client's page: a query string is not a
+    way to put somebody else's animal on the screen.
+    """
+    animal_id = request.args.get(parameter, type=int)
+    if not animal_id:
+        return None
+    animal = db.session.get(Animal, animal_id)
+    if animal is None or animal.client_id != record.id:
+        return None
+    return animal
+
+
+def _animal_or_404(client_id, animal_id):
+    """The animal on file for that client, or a 404.
+
+    Both ids are in the address, and the two have to agree. An animal is only
+    ever reached through the client it belongs to, so a request that names one
+    client's page and another client's animal is a 404 rather than a correction
+    written against the wrong household.
+    """
+    record = _record_or_404(client_id)
+    animal = db.session.get(Animal, animal_id)
+    if animal is None or animal.client_id != record.id:
+        abort(404)
+    return record, animal
+
+
+def _live_bookings(animal):
+    """The bookings still in the appointment book for this animal."""
+    return [booking for booking in animal.appointments if booking.status == STATUS_BOOKED]
+
+
+@clients_bp.get("/<int:client_id>/animals/<int:animal_id>/edit")
+def edit_animal(client_id, animal_id):
+    """Show the correction form for one animal, filled in with what is on file."""
+    record, animal = _animal_or_404(client_id, animal_id)
+    return render_template(
+        "animals/edit.html",
+        record=record,
+        animal=animal,
+        chosen=animal_details(animal),
+        problems=[],
+    )
+
+
+@clients_bp.post("/<int:client_id>/animals/<int:animal_id>/edit")
+def update_animal(client_id, animal_id):
+    """Write the correction over the animal, or hand the form back.
+
+    The row is changed rather than replaced, for the same reason a client
+    correction is: the animal's id is what every appointment already booked
+    against it is filed under, so a correction has to leave the id, the owner
+    and the booking history exactly where they are.
+    """
+    record, animal = _animal_or_404(client_id, animal_id)
+    chosen = _animal_submitted()
+    problems = _problems_with_animal(chosen)
+    if problems:
+        # Nothing is written: the animal keeps the details it already had.
+        return render_template(
+            "animals/edit.html",
+            record=record,
+            animal=animal,
+            chosen=chosen,
+            problems=problems,
+        ), 400
+
+    for column, value in animal_columns(**chosen).items():
+        setattr(animal, column, value)
+    db.session.commit()
+
+    return redirect(
+        url_for("clients.show_client", client_id=record.id, updated_animal=animal.id),
+        code=303,
+    )
+
+
+@clients_bp.post("/<int:client_id>/animals/<int:animal_id>/active")
+def set_animal_active(client_id, animal_id):
+    """Take an animal off the books, or put it back on them.
+
+    Removing an animal is a flag rather than a delete, for the same reason
+    stopping a client is: a record is history as well as a way of booking work.
+    An animal that is off the books stops being offered when a consultation is
+    booked, while its own row, every appointment already made against it and
+    the client it belongs to all stay exactly where they are.
+    """
+    record, animal = _animal_or_404(client_id, animal_id)
+    back_on_the_books = request.form.get("active") == "1"
+    changed = restore_animal(animal) if back_on_the_books else remove_animal(animal)
+    if changed:
+        db.session.commit()
+    return redirect(
+        url_for("clients.show_client", client_id=record.id, animal_changed=animal.id),
+        code=303,
+    )

@@ -1,0 +1,93 @@
+
+{% extends "base.html" %}
+
+{% block title %}Change {{ animal.name }} — {{ record.name }} — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Change {{ animal.name }}'s details</h1>
+  <p>{{ animal.name }} is recorded against {{ record.name }}. A correction is
+    written over the record rather than replacing it, so every consultation and
+    farm visit already booked against this animal stays where it is.</p>
+</section>
+
+{% if problems %}
+  <div class="alert alert-error">
+    <p>These changes cannot be saved yet:</p>
+    <ul>
+      {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Animal details</h2>
+  <form method="post" action="{{ url_for('clients.update_animal', client_id=record.id, animal_id=animal.id) }}">
+    <div class="field">
+      <label for="name">Animal name <span class="required">required</span></label>
+      <input type="text" id="name" name="name" maxlength="120" required
+             data-error="Please enter the animal's name."
+             value="{{ chosen.get('name', '') }}" placeholder="e.g. Biscuit">
+    </div>
+
+    <div class="field">
+      <label for="species">Species <span class="required">required</span></label>
+      <input type="text" id="species" name="species" maxlength="60" required
+             data-error="Please enter the species."
+             value="{{ chosen.get('species', '') }}" placeholder="e.g. Dog, Cat, Horse">
+    </div>
+
+    <div class="field">
+      <label for="breed">Breed (optional)</label>
+      <input type="text" id="breed" name="breed" maxlength="120"
+             value="{{ chosen.get('breed', '') }}" placeholder="e.g. Kelpie x">
+    </div>
+
+    {% set chosen_sex = chosen.get('sex', '') %}
+    <div class="field">
+      <label for="sex">Sex (optional)</label>
+      <select id="sex" name="sex">
+        <option value=""{% if not chosen_sex %} selected{% endif %}>Not recorded</option>
+        <option value="female"{% if chosen_sex == 'female' %} selected{% endif %}>Female</option>
+        <option value="male"{% if chosen_sex == 'male' %} selected{% endif %}>Male</option>
+        <option value="unknown"{% if chosen_sex == 'unknown' %} selected{% endif %}>Unknown</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="date_of_birth">Date of birth (optional)</label>
+      <input type="date" id="date_of_birth" name="date_of_birth"
+             value="{{ chosen.get('date_of_birth', '') }}">
+    </div>
+
+    <div class="field">
+      <label for="microchip">Microchip number (optional)</label>
+      <input type="text" id="microchip" name="microchip" maxlength="40"
+             value="{{ chosen.get('microchip', '') }}" placeholder="e.g. 956000014029551">
+    </div>
+
+    <div class="field field-check">
+      <label for="desexed">
+        <input type="checkbox" id="desexed" name="desexed"
+               {%- if chosen.get('desexed') %} checked{% endif %}>
+        Desexed
+      </label>
+    </div>
+
+    <div class="field">
+      <label for="notes">Notes (optional)</label>
+      <textarea id="notes" name="notes" rows="3"
+                placeholder="Anything the vet should know before the visit">{{ chosen.get('notes', '') }}</textarea>
+    </div>
+
+    <div class="actions">
+      <button class="primary" type="submit">Save these details</button>
+      <a class="quiet" href="{{ url_for('clients.show_client', client_id=record.id) }}">Cancel</a>
+    </div>
+  </form>
+  <p class="hint">To take this animal off the books, use the Remove button next
+    to it on {{ record.name }}'s page.</p>
+</section>
+
+<script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+{% endblock %}
