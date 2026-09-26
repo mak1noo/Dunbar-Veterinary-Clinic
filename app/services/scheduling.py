@@ -57,14 +57,22 @@ def slot_is_on_grid(day, start):
     return start in slots_for_day(day)
 
 
-def validate_consultation(*, day, start, animal, room, existing_bookings=()):
+def validate_consultation(*, day, start, animal, room, existing_bookings=(), today=None, now=None):
     """Return the problems with a proposed consultation.
 
     An empty list means the booking is valid. ``existing_bookings`` is any
     iterable of appointment-like objects with ``status``, ``room`` and
     ``start_time`` attributes (used for the double-booking check).
+
+    ``today`` (a date) and ``now`` (a time) are optional so the caller stays in
+    charge of the clock: pass them to keep the booking out of the past.
     """
     problems = []
+    if today is not None:
+        if day < today:
+            problems.append("That day is in the past. Pick a later day.")
+        elif day == today and now is not None and start < now:
+            problems.append("That time has already passed today.")
     if not is_consulting_day(day):
         problems.append("The clinic does not take consultations on this day.")
     elif not slot_is_on_grid(day, start):
@@ -81,9 +89,15 @@ def validate_consultation(*, day, start, animal, room, existing_bookings=()):
     return problems
 
 
-def validate_farm_visit(*, day, start, farm_property, estimated_hours):
-    """Return the problems with a proposed farm visit (empty list = valid)."""
+def validate_farm_visit(*, day, start, farm_property, estimated_hours, today=None):
+    """Return the problems with a proposed farm visit (empty list = valid).
+
+    ``today`` is optional, like in :func:`validate_consultation`, so the rules
+    can be reused by the booking form, the reschedule form and the tests.
+    """
     problems = []
+    if today is not None and day is not None and day < today:
+        problems.append("That day is in the past. Pick a later day.")
     if farm_property is None:
         problems.append("A farm visit must be booked against a property.")
     if estimated_hours is None:
@@ -99,6 +113,23 @@ def validate_farm_visit(*, day, start, farm_property, estimated_hours):
             elif abs(hours / FARM_VISIT_STEP_HOURS - round(hours / FARM_VISIT_STEP_HOURS)) > 1e-9:
                 problems.append("The estimated duration must be in half-hour steps.")
     return problems
+
+
+def free_rooms_by_slot(day, existing_bookings, rooms=CONSULTING_ROOMS):
+    """Return the consulting rooms that are still free for every slot of ``day``.
+
+    ``existing_bookings`` holds appointment-like objects with ``status``,
+    ``room`` and ``start_time`` attributes. Cancelled bookings do not block a
+    room, matching the rule used when a consultation is booked.
+    """
+    taken = {}
+    for booking in existing_bookings:
+        if booking.status == "booked" and booking.room in rooms:
+            taken.setdefault(booking.start_time, set()).add(booking.room)
+    return {
+        slot: [room for room in rooms if room not in taken.get(slot, set())]
+        for slot in slots_for_day(day)
+    }
 
 
 def cancel_appointment(appointment):

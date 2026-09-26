@@ -1,5 +1,5 @@
 """Story MSD426GXUST3-46: booking an in-clinic consultation."""
-from datetime import date, time
+from datetime import date, time, timedelta
 
 import pytest
 
@@ -13,8 +13,20 @@ from app.models import (
     db,
 )
 
-MONDAY = "2026-09-21"
-SUNDAY = "2026-09-27"
+def _next_weekday(weekday, earliest_offset=2):
+    """Return the next date with ``weekday`` (0 = Monday), a few days out.
+
+    The booking rules refuse dates in the past (story MSD426GXUST3-47), so the
+    tests pick their dates relative to to-day instead of hard-coding one.
+    """
+    candidate = date.today() + timedelta(days=earliest_offset)
+    return candidate + timedelta(days=(weekday - candidate.weekday()) % 7)
+
+
+MONDAY_DATE = _next_weekday(0)
+SUNDAY_DATE = _next_weekday(6)
+MONDAY = MONDAY_DATE.isoformat()
+SUNDAY = SUNDAY_DATE.isoformat()
 
 
 @pytest.fixture
@@ -71,7 +83,7 @@ def test_booking_saves_the_consultation_then_shows_confirmation(app, client, bis
         assert appointment.status == STATUS_BOOKED
         assert appointment.animal_id == biscuit
         assert appointment.room == 1
-        assert appointment.date == date(2026, 9, 21)
+        assert appointment.date == MONDAY_DATE
         assert appointment.start_time == time(9, 0)
         assert appointment.client.name == "Mrs Prosser"
         assert appointment.reason == "F3 vaccination"
@@ -130,7 +142,7 @@ def test_cancelled_bookings_do_not_block_the_slot(app, client, biscuit):
                 status=STATUS_CANCELLED,
                 client=animal.client,
                 animal=animal,
-                date=date(2026, 9, 21),
+                date=MONDAY_DATE,
                 start_time=time(9, 0),
                 room=1,
             )

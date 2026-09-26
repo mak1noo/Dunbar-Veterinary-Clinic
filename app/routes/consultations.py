@@ -1,9 +1,11 @@
 """Booking in-clinic consultations.
 
 Story MSD426GXUST3-46: one animal, one 15-minute slot, one of the two
-consulting rooms, on the clinic's consulting timetable. The timetable rules
-and the validation live in ``app.services.scheduling``; this module is the
-HTTP layer that turns the reception desk's form into an ``Appointment``.
+consulting rooms, on the clinic's consulting timetable. Story MSD426GXUST3-47
+adds the timetable rules around it: nothing in the past, and the form shows
+which rooms are still free for each slot. The rules themselves live in
+``app.services.scheduling``; this module is the HTTP layer that turns the
+reception desk's form into an ``Appointment``.
 """
 from datetime import date, datetime
 
@@ -11,7 +13,12 @@ from flask import Blueprint, abort, redirect, render_template, request, url_for
 from sqlalchemy.exc import IntegrityError
 
 from app.models import CONSULTATION, STATUS_BOOKED, Animal, Appointment, db
-from app.services.scheduling import CONSULTING_ROOMS, slots_for_day, validate_consultation
+from app.services.scheduling import (
+    CONSULTING_ROOMS,
+    free_rooms_by_slot,
+    slots_for_day,
+    validate_consultation,
+)
 
 consultations_bp = Blueprint("consultations", __name__, url_prefix="/consultations")
 
@@ -66,13 +73,31 @@ def _booked_consultations(day):
     ).all()
 
 
+def _availability_label(free_rooms):
+    """Short hint for one slot, the way the front desk would say it."""
+    if not free_rooms:
+        return "fully booked"
+    if len(free_rooms) == 1:
+        return f"only room {free_rooms[0]} free"
+    return "both rooms free"
+
+
 def _form_context(day, chosen):
+    free_rooms = free_rooms_by_slot(day, _booked_consultations(day))
+    slots = []
+    for slot in slots_for_day(day):
+        rooms_free = free_rooms.get(slot, list(CONSULTING_ROOMS))
+        slots.append(
+            {
+                "value": slot.strftime(TIME_FORMAT),
+                "label": _slot_label(slot),
+                "free_rooms": len(rooms_free),
+                "availability": _availability_label(rooms_free),
+            }
+        )
     return {
         "day": day,
-        "slots": [
-            {"value": slot.strftime(TIME_FORMAT), "label": _slot_label(slot)}
-            for slot in slots_for_day(day)
-        ],
+        "slots": slots,
         "rooms": CONSULTING_ROOMS,
         "animal_groups": _animal_groups(),
         "chosen": chosen,
@@ -89,6 +114,8 @@ def _problems(day, start, animal, room):
         animal=animal,
         room=room,
         existing_bookings=_booked_consultations(day),
+        today=date.today(),
+        now=datetime.now().time(),
     )
 
 

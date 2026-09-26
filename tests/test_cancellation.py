@@ -1,5 +1,5 @@
 """Tests for cancelling appointments without deleting them (MSD426GXUST3-54)."""
-from datetime import date, time
+from datetime import date, time, timedelta
 
 from app.models import (
     CONSULTATION,
@@ -15,7 +15,17 @@ from app.models import (
 from app.services.scheduling import cancel_appointment
 
 
-DAY = date(2026, 9, 21)
+def _next_weekday(weekday, earliest_offset=2):
+    """The next date with ``weekday`` (0 = Monday), a few days out.
+
+    The booking rules refuse dates in the past (story MSD426GXUST3-47), so the
+    day has to be picked relative to to-day rather than hard-coded.
+    """
+    candidate = date.today() + timedelta(days=earliest_offset)
+    return candidate + timedelta(days=(weekday - candidate.weekday()) % 7)
+
+
+DAY = _next_weekday(0)
 
 
 def _appointments():
