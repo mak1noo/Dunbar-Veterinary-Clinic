@@ -62,22 +62,33 @@
   {% endif %}
 </section>
 
+{% if added_property %}
+  <div class="alert alert-ok">
+    <p>{{ added_property.name }} ({{ added_property.locality }}) is now on file for this client.</p>
+  </div>
+{% endif %}
+
 <section class="panel">
   <h2>Farm properties</h2>
+  <p class="hint">A farm visit is booked against one of these properties. A client
+    can have animals, properties, both or neither.</p>
+  <p><a class="button" href="{{ url_for('clients.new_property', client_id=record.id) }}">Add a farm property</a></p>
   {% if record.properties %}
     <table class="records">
       <thead>
         <tr>
           <th scope="col">Property</th>
           <th scope="col">Locality</th>
+          <th scope="col">Usual run day</th>
           <th scope="col">Access notes</th>
         </tr>
       </thead>
       <tbody>
         {% for farm in record.properties %}
-          <tr>
+          <tr{% if added_property and farm.id == added_property.id %} class="just-added"{% endif %}>
             <td>{{ farm.name }}</td>
             <td>{{ farm.locality }}</td>
+            <td>{{ run_days[farm.preferred_run_day] if farm.preferred_run_day is not none else "—" }}</td>
             <td>{{ farm.access_notes or "—" }}</td>
           </tr>
         {% endfor %}

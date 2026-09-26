@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Add a farm property — {{ record.name }} — Dunbar Veterinary Clinic{% endblock %}
+
+{% block content %}
+<section class="intro">
+  <h1>Add a farm property</h1>
+  <p>{{ record.name }} is already on the register, so this property is recorded
+    against that client. Farm visits are booked against the property, so reception
+    needs at least the property name and the locality it sits in.</p>
+</section>
+
+{% if problems %}
+  <div class="alert alert-error">
+    <p>This farm property cannot be saved yet:</p>
+    <ul>
+      {% for problem in problems %}<li>{{ problem }}</li>{% endfor %}
+    </ul>
+  </div>
+{% endif %}
+
+<section class="panel">
+  <h2>Property details</h2>
+  <form method="post" action="{{ url_for('clients.new_property', client_id=record.id) }}">
+    <div class="field">
+      <label for="name">Property name <span class="required">required</span></label>
+      <input type="text" id="name" name="name" maxlength="120" required
+             data-error="Please enter the property name."
+             value="{{ chosen.get('name', '') }}" placeholder="e.g. Stony Creek">
+    </div>
+
+    <div class="field">
+      <label for="locality">Locality <span class="required">required</span></label>
+      <input type="text" id="locality" name="locality" maxlength="120" required
+             data-error="Please enter the locality."
+             value="{{ chosen.get('locality', '') }}" placeholder="e.g. Bunjurgen">
+    </div>
+
+    {% set chosen_day = chosen.get('preferred_run_day', '') %}
+    <div class="field">
+      <label for="preferred_run_day">Usual run day (optional)</label>
+      <select id="preferred_run_day" name="preferred_run_day">
+        <option value=""{% if not chosen_day %} selected{% endif %}>No usual day</option>
+        {% for day in range(7) %}
+          <option value="{{ day }}"{% if chosen_day == day|string %} selected{% endif %}>{{ run_days[day] }}</option>
+        {% endfor %}
+      </select>
+      <p class="hint">Leave this alone if the property is seen whenever the run is
+        next out that way.</p>
+    </div>
+
+    <div class="actions">
+      <button class="primary" type="submit">Save this property</button>
+      <a class="quiet" href="{{ url_for('clients.show_client', client_id=record.id) }}">Cancel</a>
+    </div>
+  </form>
+</section>
+
+<script src="{{ url_for('static', filename='js/form-validation.js') }}"></script>
+{% endblock %}
